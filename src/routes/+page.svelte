@@ -12,15 +12,25 @@
 	import Loader from '$lib/components/Loader.svelte';
 
 	const loadData = async () => {
-		const response = await getPosts();
+		try {
+			const response = await getPosts();
+			if (!response.success) {
+				throw new Error(getReasonPhrase(response.data.code));
+			}
 
-		if (!response.success) {
-			throw new Error(getReasonPhrase(response.data.code));
+			localStorage.setItem('posts', JSON.stringify(response.data));
+			alert('Данные получены с API и сохранены в localStorage');
+			return response.data;
+		} catch (error) {
+			const cachedPosts = localStorage.getItem('posts');
+			if (cachedPosts) {
+				alert('Данные загружены из localStorage');
+				return JSON.parse(cachedPosts);
+			} else {
+				throw new Error('Нет данных для отображения.');
+			}
 		}
-
-		return response.data;
 	};
-
 </script>
 
 <div class="layout">
@@ -31,8 +41,7 @@
 	{:then posts}
 		<div class="posts">
 			{#each posts as post (post.id)}
-				<div class="posts__item"
-						 in:fade>
+				<div class="posts__item" in:fade>
 					<h4>{post.title}</h4>
 					<p>{post.body}</p>
 				</div>
@@ -43,64 +52,61 @@
 	{/await}
 </div>
 
-
 <style lang="scss">
-  .layout {
-    padding: 25px 50px;
+	.layout {
+		padding: 25px 50px;
 
-    display: flex;
-    flex-direction: column;
+		display: flex;
+		flex-direction: column;
 
-    justify-content: center;
-    align-items: center;
+		justify-content: center;
+		align-items: center;
 
-    gap: 50px;
+		gap: 50px;
 
-    width: 100%;
-    height: max-content;
+		width: 100%;
+		height: max-content;
 
-    h1 {
-      text-align: center;
-    }
-  }
+		h1 {
+			text-align: center;
+		}
+	}
 
-  .posts {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    width: 500px;
+	.posts {
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+		width: 500px;
 
+		&__item {
+			padding: 10px 15px;
+			display: flex;
+			flex-direction: column;
+			gap: 15px;
 
-    &__item {
-      padding: 10px 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
+			height: 150px;
+			width: 100%;
 
-      height: 150px;
-      width: 100%;
+			border-radius: 8px;
 
-      border-radius: 8px;
+			background: rgba(0, 0, 0, 0.08);
 
-      background: rgba(0, 0, 0, 0.08);
+			h4 {
+				color: #2b302c;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
 
+			p {
+				overflow: hidden;
+				display: -webkit-box;
+				-webkit-line-clamp: 2; /* number of lines to show */
+				line-clamp: 2;
+				-webkit-box-orient: vertical;
 
-      h4 {
-        color: #2B302C;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      p {
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2; /* number of lines to show */
-        line-clamp: 2;
-        -webkit-box-orient: vertical;
-
-        color: rgba(43, 48, 44, 0.7);
-      }
-    }
-  }
+				color: rgba(43, 48, 44, 0.7);
+			}
+		}
+	}
 </style>
